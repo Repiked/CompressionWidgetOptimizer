@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
+		<script src="script.js"></script>
 		<style>
 			.center {
 			  text-align: center;
@@ -9,7 +10,7 @@
 		<meta charset=”utf-8″>
 		<title>Compression Widget Solver</title>
 	</head>
-	<body onload=checkExistingResult() style="background-color:floralwhite;"> 
+	<body style="background-color:floralwhite;" onload="checkExistingResult();"> 
 		<h1 class="center">Code.org Compression Widget Solver</h1> 
 		<p class="center">This tool helps solvers to compress any text.</p>
 		<form>
@@ -26,15 +27,14 @@
 			  <option value="peasePorridgeHot">Pease porridge hot</option>
 			  <option value="Aaaaaaaa">Aaaaaaaaaaaa</option>
 		  </select> <br>
-		  <textarea id="uncompressedText" name="uncompressedText" rows="4" cols="80">Pease_porridge_hot_Pease_porridge_cold_Pease_porridge_in_the_pot_Nine_days_old._Some_like_it_hot_Some_like_it_cold_Some_like_it_in_the_pot_Nine_days_old.</textarea><br>
+		  <textarea id="uncompressedText" name="uncompressedText" rows="5" cols="80">So_wake_me_up_when_it's_all_over_When_I'm_wiser_and_I'm_older_All_this_time_I_was_finding_myself_And_I_didn't_know_I_was_lost__Didn't_know_I_was_lost_I_didn't_know_I_was_lost_I_didn't_know_I_was_lost_I_didn't_know_(didn't_know,_didn't_know)</textarea><br>
 		  <p><label for="suggestedSegments">Enter any suggested segments below: </label></p>
 		  <textarea id="suggestedSegments" name="suggestedSegments" rows="4" cols="80" placeholder= "Enter suggested segments here (new line for each)"></textarea><br><br>
-		  Heuristic ratio: <input type="number" name="heuristicRatio" id="heuristicRatio" size="5" value="0.9" min="0" max="1" step="0.01"> <br>
-		  Iteration ratio: <input type="number" name="iterateRatio" id="iterateRatio" size="5" value="0.5" min="0" max="0.99" step="0.01"> <br><br>
+		  Heuristic ratio: <input type="number" name="heuristicRatio" id="heuristicRatio" size="5" value="0.95" min="0" max="1" step="0.01"> <br>
+		  Iteration ratio: <input type="number" name="iterateRatio" id="iterateRatio" size="5" value="0.3" min="0" max="0.99" step="0.01"> <br><br>
 		  <input type="checkbox" name="doDeeperSearch" id="doDeeperSearch"> Allow deeper segment searching (will take a bit longer) </input><br><br>
 		  <input type="submit" value="Solve!" onclick="solveText()">
 		</form>
-		<p id = "compressedText"></p>
+		<p id = "output"></p>
 	</body>
-	<script src="script.js"></script>
 </html>

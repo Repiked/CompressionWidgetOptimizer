@@ -97,6 +97,7 @@ function solveText(){
     }
     totalStateNum += nextStates.length;
     console.log("Finished generating children nodes.");
+    document.querySelector("#output").value = "Finished generating children nodes. Direct comparison starting.";
 
     nextStates.sort(function (a, b){
       return a[5].localeCompare(b[5], 'en', { sensitivity: 'base' });
@@ -122,6 +123,7 @@ function solveText(){
         if (nextStates[i][6] > highestMin){
           highestMin = minCurVal[2];
           leadingState = minCurVal;
+          document.querySelector("#output").value = "New highest min: " + highestMin;
           console.log("New highest min: " + highestMin);
         }
       }
@@ -131,6 +133,7 @@ function solveText(){
         return calcStateScore(b[6], b[7], highestMin) - calcStateScore(a[6], a[7], highestMin);
       })
     }
+    document.querySelector("#output").value = "Min/max omission going";
     for (i = 0; i < nextStates.length; i++){
       var maxCurVal = findMaxStateScore(nextStates[i], conflictDictionary)
       nextStates[i][7] = Math.min(nextStates[i][7], maxCurVal);
@@ -146,6 +149,7 @@ function solveText(){
     nextStates.sort(function (a,b){
       return calcStateScore(a[6], a[7], highestMin) - calcStateScore(b[6], b[7], highestMin);
     })
+    document.querySelector("#output").value = "Heuristic omission going";
     var heuristicCount = Math.floor(nextStates.length * heuristicRatio);
     var heuristicScore = Math.floor(calcStateScore(nextStates[heuristicCount][6], nextStates[heuristicCount][7], highestMin));
     for (var i = 0; i < heuristicCount; i++){
@@ -169,6 +173,7 @@ function solveText(){
     var usedSegmentListSorted = Object.keys(usedSegmentDictionary).sort(function (a,b){
       return usedSegmentDictionary[b] - usedSegmentDictionary[a];
     })
+    document.querySelector("#output").value = "Stage done. Next stage generating children...";
     console.log("Used segments out of dictionary:\n" + usedSegmentListSorted.join("\n"));
     states = nextStates;
     nextStates = [];
@@ -186,16 +191,16 @@ function solveText(){
   console.log("Took " + Math.floor((endTime - startTime)*10)/10000 + " seconds.");
 
   output = "Dictionary:<br>" + leadingState[0].join("<br>") + "<br><br>Bytes saved: " + leadingState[2] + "<br>Took " + Math.floor((endTime - startTime)*10)/10000 + " seconds.";
-  document.querySelector("#compressedText").innerHTML = output;
+  document.querySelector("#output").innerHTML = output;
   window.sessionStorage.setItem('output', output);
   return output;
 }
 
 function checkExistingResult(){
   if (window.sessionStorage.getItem('output')){
-    document.querySelector("#compressedText").innerHTML = window.sessionStorage.getItem('output');
+    document.querySelector("#output").innerHTML = window.sessionStorage.getItem('output');
     document.querySelector("#uncompressedText").value = window.sessionStorage.getItem('uncompressedText');
-    document.querySelector("#includeList").value = window.sessionStorage.getItem('includeList');
+    document.querySelector("#suggestedSegments").value = window.sessionStorage.getItem('includeList');
     document.querySelector("#heuristicRatio").value = window.sessionStorage.getItem('heuristicRatio');
     document.querySelector("#iterateRatio").value = window.sessionStorage.getItem('iterateRatio');
     document.querySelector("#doDeeperSearch").value = window.sessionStorage.getItem('doDeeperSearch');
@@ -215,7 +220,7 @@ function changeUncompressedText(){
       "peasePorridgeHot" : "Pease_porridge_hot_Pease_porridge_cold_Pease_porridge_in_the_pot_Nine_days_old._Some_like_it_hot_Some_like_it_cold_Some_like_it_in_the_pot_Nine_days_old.",
       "Aaaaaaaa" : "Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
   }
-  document.querySelector("#uncompressedText").value = prebuiltDict[optionChosen];
+  document.querySelector("#output").value = prebuiltDict[optionChosen];
 }
 
 function calcByteSavings(a, b){
