@@ -1,1 +1,1 @@
-# CompressionWidgetOptimizer
+# Compression Widget Optimizer
