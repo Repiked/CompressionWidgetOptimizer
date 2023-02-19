@@ -29,11 +29,13 @@ function solveText(){
   var heuristicRatio = parseFloat(document.querySelector("#heuristicRatio").value);
   var iterateRatio = parseFloat(document.querySelector("#iterateRatio").value);
   var doDeeperSearch = document.querySelector("#doDeeperSearch").checked;
+  var doEvenDeeperSearch = document.querySelector("#doEvenDeeperSearch").checked;
   window.sessionStorage.setItem('uncompressedText', uncompressedText);
   window.sessionStorage.setItem('includeList', includeList.join("\n"));
   window.sessionStorage.setItem('heuristicRatio', heuristicRatio);
   window.sessionStorage.setItem('iterateRatio', iterateRatio);
   window.sessionStorage.setItem('doDeeperSearch', doDeeperSearch);
+  window.sessionStorage.setItem('doEvenDeeperSearch', doEvenDeeperSearch);
 
   if (uncompressedText.length < 8){
     throw "Text must be at least 8 bytes!";
@@ -60,13 +62,19 @@ function solveText(){
   var segmentDictionary = {};
   var usedSegmentDictionary = {};
   var slashedText = slashText(uncompressedText, segmentList, segmentDictionary, initialDictionary);
+  console.log(initialDictionary);
   var initList = [];
-  if (doDeeperSearch){
+  if (doDeeperSearch || doEvenDeeperSearch){
     for (var i = 0; i < segmentList.length; i++){
       if (segmentList[i] in initialDictionary){
         for (var j = 0; j < initialDictionary[segmentList[i]].length; j++){
-          segmentList.push(initialDictionary[segmentList[i]][j]);
-          initList.push(initialDictionary[segmentList[i]][j]);
+          if (initialDictionary[segmentList[i]][j] && doDeeperSearch && segmentList[i].length == initialDictionary[segmentList[i]][j].length + 1){
+            segmentList.push(initialDictionary[segmentList[i]][j]);
+            initList.push(initialDictionary[segmentList[i]][j]);
+          } else if (initialDictionary[segmentList[i]][j] && doEvenDeeperSearch && segmentList[i].length == initialDictionary[segmentList[i]][j].length + 2) {
+            segmentList.push(initialDictionary[segmentList[i]][j]);
+            initList.push(initialDictionary[segmentList[i]][j]);
+          }
         }
       }
     }
@@ -112,7 +120,7 @@ function solveText(){
     nextStates.sort(function (a, b){
       return a[5].localeCompare(b[5], 'en', { sensitivity: 'base' });
     })
-
+    console.log(nextStates);
     var nextStateScores = [];
     for (i = 0; i + 1 < nextStates.length; i++){
       if (nextStates[i][5] == nextStates[i+1][5]){
@@ -204,6 +212,9 @@ function solveText(){
   output = "Dictionary:<br>" + leadingState[0].join("<br>") + "<br><br>Bytes saved: " + leadingState[2] + "<br>Took " + Math.floor((endTime - startTime)*10)/10000 + " seconds.";
   document.querySelector("#output").innerHTML = output;
   window.sessionStorage.setItem('output', output);
+  while (true){
+    i += 1;
+  }
   return output;
 }
 
@@ -214,7 +225,8 @@ function checkExistingResult(){
     document.querySelector("#suggestedSegments").value = window.sessionStorage.getItem('includeList');
     document.querySelector("#heuristicRatio").value = window.sessionStorage.getItem('heuristicRatio');
     document.querySelector("#iterateRatio").value = window.sessionStorage.getItem('iterateRatio');
-    document.querySelector("#doDeeperSearch").value = window.sessionStorage.getItem('doDeeperSearch');
+    document.querySelector("#doDeeperSearch").checked = window.sessionStorage.getItem('doDeeperSearch');
+    document.querySelector("#doEvenDeeperSearch").checked = window.sessionStorage.getItem('doEvenDeeperSearch');
   }
 }
 
@@ -563,19 +575,19 @@ function slashText(text, list, dictionary, initDict){
           if (newText.substring(i, i + len - 1) in dictionary && repsOfSegment == dictionary[newText.substring(i, i + len - 1)]){
             list.splice(list.indexOf(newText.substring(i, i + len - 1)), 1);
             if (initDict[newText.substring(i, i + len)]){
-              initDict[newText.substring(i, i + len)] = initDict[newText.substring(i, i + len)].concat([newText.substring(i, i + len - 1)]);
+              initDict[newText.substring(i, i + len)] = initDict[newText.substring(i, i + len)].concat([newText.substring(i, i + len - 1)]).concat(initDict[newText.substring(i, i + len - 1)]);
             } else {
-              initDict[newText.substring(i, i + len)] = [newText.substring(i, i + len - 1)];
+              initDict[newText.substring(i, i + len)] = [newText.substring(i, i + len - 1)].concat(initDict[newText.substring(i, i + len - 1)]);
             }
             delete dictionary[newText.substring(i, i + len - 1)];
-            delete initDict[newText.substring(i, i + len - 1)]
+            delete initDict[newText.substring(i, i + len - 1)];
           }
           if (newText.substring(i + 1, i + len) in dictionary && repsOfSegment == dictionary[newText.substring(i + 1, i + len)]){
             list.splice(list.indexOf(newText.substring(i + 1, i + len)), 1);
             if (initDict[newText.substring(i, i + len)]){
-              initDict[newText.substring(i, i + len)] = initDict[newText.substring(i, i + len)].concat([newText.substring(i + 1, i + len)]);
+              initDict[newText.substring(i, i + len)] = initDict[newText.substring(i, i + len)].concat([newText.substring(i + 1, i + len)]).concat(initDict[newText.substring(i + 1, i + len)]);
             } else {
-              initDict[newText.substring(i, i + len)] = [newText.substring(i + 1, i + len)];
+              initDict[newText.substring(i, i + len)] = [newText.substring(i + 1, i + len)].concat(initDict[newText.substring(i + 1, i + len)]);
             }
             delete dictionary[newText.substring(i + 1, i + len)];
             delete initDict[newText.substring(i + 1, i + len)];
