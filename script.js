@@ -35,7 +35,6 @@ function solveText(){
   window.sessionStorage.setItem('iterateRatio', iterateRatio);
   window.sessionStorage.setItem('doDeeperSearch', doDeeperSearch);
 
-  console.log(includeList);
   if (uncompressedText.length < 8){
     throw "Text must be at least 8 bytes!";
   }
@@ -73,7 +72,9 @@ function solveText(){
     }
   }
   for (var i = 0; i < includeList.length; i++){
-    segmentList.push(includeList[i]);
+    if (!(segmentList.includes(includeList[i]))){
+      segmentList.push(includeList[i]);
+    }
   }
   for (var i = 0; i < segmentList.length; i++){
     indexDictionary[segmentList[i]] = alphabet[i];
@@ -91,7 +92,7 @@ function solveText(){
           var usedSegment = states[i][1][j];
           var newPossibleSegments = substituteSegmentList(states[i][1].slice(0,j).concat(states[i][1].slice(j+1,states[i][1].length)), states[i][1][j], emojis[states[i][0].length]);
           var subbedText = substituteSegment(states[i][4], states[i][1][j], emojis[states[i][0].length]);
-          nextStates.push([states[i][0].concat(states[i][1][j]), newPossibleSegments, states[i][2] + states[i][3][j], createSegmentSavings(states[i], usedSegment, conflictDictionary), subbedText, states[i][5].concat(indexDictionary[iterativeUnsubText(states[i][1][j], states[i][0])]).split("").sort().join(""), states[i][6], states[i][7]]);
+          nextStates.push([states[i][0].concat(states[i][1][j]), newPossibleSegments, states[i][2] + states[i][3][j], createSegmentSavings(states[i], usedSegment, conflictDictionary), subbedText, states[i][5].concat(indexDictionary[recursiveUnsubText(states[i][1][j], states[i][0])]).split("").sort().join(""), states[i][6], states[i][7]]);
         }
       }
     }
@@ -158,7 +159,7 @@ function solveText(){
     }
     for (var i = 0; i < nextStates.length; i++){
       for (var j = 0; j < nextStates[i][0].length; j++){
-        var tempSegment = iterativeUnsubText(nextStates[i][0][j], nextStates[i][0]);
+        var tempSegment = recursiveUnsubText(nextStates[i][0][j], nextStates[i][0]);
         if (!(initList.includes(tempSegment))){
           continue;
         }
@@ -220,7 +221,7 @@ function changeUncompressedText(){
       "peasePorridgeHot" : "Pease_porridge_hot_Pease_porridge_cold_Pease_porridge_in_the_pot_Nine_days_old._Some_like_it_hot_Some_like_it_cold_Some_like_it_in_the_pot_Nine_days_old.",
       "Aaaaaaaa" : "Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
   }
-  document.querySelector("#output").value = prebuiltDict[optionChosen];
+  document.querySelector("#uncompressedText").value = prebuiltDict[optionChosen];
 }
 
 function calcByteSavings(a, b){
@@ -246,12 +247,12 @@ function countSegment(text, segment){
 
 function createSegmentSavings(array, segment, conflictDict){
   var newList = [];
-  var currentDict = conflictDict[iterativeUnsubText(segment, array[0])];
+  var currentDict = conflictDict[recursiveUnsubText(segment, array[0])];
   var selectedIndex = 0;
   for (var i = 0; i < array[1].length; i++){
     if (array[1][i] != segment){
       for (var j = 0; j < currentDict.length + 1; j++){
-        if (currentDict[j][0] == iterativeUnsubText(array[1][i], array[0])){
+        if (currentDict[j][0] == recursiveUnsubText(array[1][i], array[0])){
           selectedIndex = j;
           break;
         }
@@ -270,11 +271,11 @@ function initializeSegmentSavings(text, segList){
   return newList;
 }
 
-function iterativeUnsubText(text, dictArray){
+function recursiveUnsubText(text, dictArray){
   var subbedText = "";
   for (var i = 0; i < text.length; i++){
     if (emojis.includes(text.substring(i, i+1))){
-      subbedText = subbedText.concat(iterativeUnsubText(dictArray[emojis.indexOf(text.substring(i, i+1))], dictArray))
+      subbedText = subbedText.concat(recursiveUnsubText(dictArray[emojis.indexOf(text.substring(i, i+1))], dictArray))
     } else {
       subbedText = subbedText.concat(text.substring(i, i+1));
     }
@@ -282,7 +283,7 @@ function iterativeUnsubText(text, dictArray){
   return subbedText;
 }
 
-function iterativeSubText(text, dictArray, isFullySub){
+function recursiveSubText(text, dictArray, isFullySub){
   var newText = standardizeText(text)
   for (var i = 0; i < dictArray.length; i++){
     newText = substituteSegment(newText, dictArray[i], emojis[i]);
@@ -392,7 +393,7 @@ function findMaxStateScore(arr, dictionary){
   var usedList = [];
   var firstIndex = 0;
   var diffTotal = 0
-  var firstSegment = iterativeUnsubText(arr[1][firstIndex], arr[0]);
+  var firstSegment = recursiveUnsubText(arr[1][firstIndex], arr[0]);
   while (usedList.length + 1 < arr[3].length){
     while (usedList.includes(firstSegment)){
       if (firstIndex + 1 < arr[1].length){
@@ -400,7 +401,7 @@ function findMaxStateScore(arr, dictionary){
       } else {
         break;
       }
-      firstSegment = iterativeUnsubText(arr[1][firstIndex], arr[0]);
+      firstSegment = recursiveUnsubText(arr[1][firstIndex], arr[0]);
     }
     var firstDict = dictionary[firstSegment]
     var firstScore = arr[3][firstIndex];
@@ -408,7 +409,7 @@ function findMaxStateScore(arr, dictionary){
     var secondCandidate = firstDict[0][0];
     for (var i = 0; i < firstDict.length; i++){
       var secondSegment = firstDict[i][0];
-      var replacedSecondSegment = iterativeSubText(secondSegment, arr[0], false);
+      var replacedSecondSegment = recursiveSubText(secondSegment, arr[0], false);
       if (!(usedList.includes(secondSegment)) && firstSegment != secondSegment && !(arr[0].includes(replacedSecondSegment))){
         var secondDict = dictionary[secondSegment];
         var secondScore = 0;
@@ -447,7 +448,7 @@ function findMaxStateScore(arr, dictionary){
 }
 
 function findAllSegmentIndices(text, segment){
-  var newText = standardizeText(text, "string");
+  var newText = standardizeText(text);
   var indicesOfSegments = [];
   for (var i = 0; i <= newText.length - segment.length; i++){
     if (newText.substring(i, i+segment.length) == segment){
@@ -459,7 +460,7 @@ function findAllSegmentIndices(text, segment){
   return indicesOfSegments;
 }
 
-function standardizeText(text, type){
+function standardizeText(text){
   var newList = [];
   for (var i = 0; i < text.length; i++){
     newList.push(text[i]);
@@ -472,7 +473,7 @@ function standardizeText(text, type){
 }
 
 function createConflictDict(text, array){
-  var standardText = standardizeText(text, "string");
+  var standardText = standardizeText(text);
   var sortedArray = array.sort(function (a, b) {return a.length - b.length});
   var conflictDict = {};
   for (var i = 0; i < sortedArray.length; i++){
