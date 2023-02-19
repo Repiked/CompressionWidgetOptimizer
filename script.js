@@ -24,7 +24,7 @@ var output = "";
 function solveText(){
   var startObject = new Date;
   var startTime = startObject.getTime();
-  var uncompressedText = document.querySelector("#uncompressedText").value;
+  var uncompressedText = standardizeText(document.querySelector("#uncompressedText").value);
   var includeList = document.querySelector("#suggestedSegments").value.split("\n");
   var heuristicRatio = parseFloat(document.querySelector("#heuristicRatio").value);
   var iterateRatio = parseFloat(document.querySelector("#iterateRatio").value);
@@ -77,10 +77,19 @@ function solveText(){
     }
   }
   for (var i = 0; i < segmentList.length; i++){
-    indexDictionary[segmentList[i]] = alphabet[i];
+    for (var j = 0; j < Object.keys(indexDictionary).length; j++){
+      if (isCyclic(Object.keys(indexDictionary)[j], segmentList[i], segmentDictionary)){
+        indexDictionary[segmentList[i]] = indexDictionary[Object.keys(indexDictionary)[j]];
+      }
+    }
+    if (!(indexDictionary[segmentList[i]])){
+     indexDictionary[segmentList[i]] = alphabet[Object.keys(indexDictionary).length];
+    }
   }
-  var conflictDictionary = createConflictDict(slashedText, segmentList);
+  console.log(indexDictionary);
   console.log(segmentList);
+  console.log(segmentDictionary);
+  var conflictDictionary = createConflictDict(slashedText, segmentList);
   console.log(conflictDictionary);  
   console.log(uncompressedText.length + "-byte input!");
   states.push([[], segmentList, 0, initializeSegmentSavings(uncompressedText, segmentList), slashedText, "", 0, 1000000]);
@@ -97,7 +106,7 @@ function solveText(){
       }
     }
     totalStateNum += nextStates.length;
-    console.log("Finished generating children nodes.");
+    console.log("Finished generating " + nextStates.length + " children nodes.");
     document.querySelector("#output").value = "Finished generating children nodes. Direct comparison starting.";
 
     nextStates.sort(function (a, b){
@@ -109,8 +118,10 @@ function solveText(){
       if (nextStates[i][5] == nextStates[i+1][5]){
         if (nextStates[i][1] > nextStates[i+1][1]){
           nextStates.splice(i+1, 1);
-        } else {
+        } else if (nextStates[i][1] < nextStates[i+1][1]) {
           nextStates.splice(i, 1);
+        } else {
+          continue;
         }
         i -= 1;
         console.log("Omitted by direct comparison!") 
@@ -134,7 +145,6 @@ function solveText(){
         return calcStateScore(b[6], b[7], highestMin) - calcStateScore(a[6], a[7], highestMin);
       })
     }
-    document.querySelector("#output").value = "Min/max omission going";
     for (i = 0; i < nextStates.length; i++){
       var maxCurVal = findMaxStateScore(nextStates[i], conflictDictionary)
       nextStates[i][7] = Math.min(nextStates[i][7], maxCurVal);
@@ -247,17 +257,10 @@ function countSegment(text, segment){
 
 function createSegmentSavings(array, segment, conflictDict){
   var newList = [];
-  var currentDict = conflictDict[recursiveUnsubText(segment, array[0])];
-  var selectedIndex = 0;
+  var subbedSegment = recursiveUnsubText(segment, array[0]);
   for (var i = 0; i < array[1].length; i++){
     if (array[1][i] != segment){
-      for (var j = 0; j < currentDict.length + 1; j++){
-        if (currentDict[j][0] == recursiveUnsubText(array[1][i], array[0])){
-          selectedIndex = j;
-          break;
-        }
-      }
-      newList.push(array[3][i] - currentDict[selectedIndex][1]);
+      newList.push(array[3][i] - conflictDict[subbedSegment][recursiveUnsubText(array[1][i], array[0])]);
     }
   }
   return newList;
@@ -321,6 +324,7 @@ function substituteSegmentList(textList, segment, substitute){
   return newList;
 }
 
+// remake this, state slice isn't necessary
 function findMinStateScore(arr){
   var state = arr.slice(1, 5);
   var selectedIndex = 0;
@@ -353,10 +357,13 @@ function findMinStateScore(arr){
         isBreak = true;
         break;
       }
+      // console.log(state[0][selectedIndex] + ": " + state[2][selectedIndex]);
       usedSegmentList.push(state[0][selectedIndex]);
       var newPossibleSegments = substituteSegmentList(state[0].slice(0,selectedIndex).concat(state[0].slice(selectedIndex+1, state[0].length)), state[0][selectedIndex], emojis[counter]);
       var subbedText = substituteSegment(state[3], state[0][selectedIndex], emojis[counter]);
       state = [newPossibleSegments, state[1] + state[2][selectedIndex], initializeSegmentSavings(subbedText, newPossibleSegments), subbedText];
+      // console.log([arr[0].concat(usedSegmentList)].concat(state));
+      // console.log(arr[0].concat(usedSegmentList).join("\n"));
       counter++;
     } else {
       break;
@@ -368,7 +375,7 @@ function findMinStateScore(arr){
   return [arr[0].concat(usedSegmentList)].concat(state);
 }
 
-function findMaxStateScore(arr, dictionary){
+function findMaxStateScore(arr, conflictDict){
   var sumTotal = 0;
   if (arr[3].length == 0){
     return arr[2];
@@ -403,28 +410,23 @@ function findMaxStateScore(arr, dictionary){
       }
       firstSegment = recursiveUnsubText(arr[1][firstIndex], arr[0]);
     }
-    var firstDict = dictionary[firstSegment]
     var firstScore = arr[3][firstIndex];
     var greatestDiff = 0
-    var secondCandidate = firstDict[0][0];
+    var firstDict = Object.keys(conflictDict[firstSegment])
+    var secondCandidate = Object.keys(conflictDict[firstSegment])[0];
     for (var i = 0; i < firstDict.length; i++){
-      var secondSegment = firstDict[i][0];
-      var replacedSecondSegment = recursiveSubText(secondSegment, arr[0], false);
-      if (!(usedList.includes(secondSegment)) && firstSegment != secondSegment && !(arr[0].includes(replacedSecondSegment))){
-        var secondDict = dictionary[secondSegment];
-        var secondScore = 0;
-        var j = 0;
-        while (arr[1][j] != replacedSecondSegment){
-          j++;
+      var secondSegment = recursiveUnsubText(firstDict[i], arr[0]);
+      var secondScore = 0;
+      if (!(usedList.includes(secondSegment)) && firstSegment != secondSegment && !(arr[0].includes(secondSegment))){
+        for (var j = 0; j < arr[1].length; j++){
+          if (arr[1][j] == secondSegment){
+            secondScore = arr[3][j]; 
+          }
         }
-        secondScore = arr[3][j];
-        j = 0;
-        while (secondDict[j][0] != firstSegment){
-          j++;
-        }
-        firstDictIndex = j;
-        var firstValue = Math.min(firstDict[i][1], secondScore);
-        var secondValue = Math.min(secondDict[firstDictIndex][1], firstScore);
+        // console.log("firstSegment: " + firstSegment);
+        // console.log("secondSegment: " + secondSegment);
+        var firstValue = Math.min(conflictDict[firstSegment][secondSegment], secondScore);
+        var secondValue = Math.min(conflictDict[secondSegment][firstSegment], firstScore);
         var curDiff = Math.min(firstValue, secondValue);
         if (curDiff > greatestDiff){
           greatestDiff = curDiff;
@@ -477,17 +479,19 @@ function createConflictDict(text, array){
   var sortedArray = array.sort(function (a, b) {return a.length - b.length});
   var conflictDict = {};
   for (var i = 0; i < sortedArray.length; i++){
-    conflictDict[sortedArray[i]] = [];
+    conflictDict[sortedArray[i]] = {};
   }
-  for (i = 0; i < sortedArray.length; i++){
+  for (var i = 0; i < sortedArray.length; i++){
     for (var j = 0; j < sortedArray.length; j++){
-      if (i == j){
-        continue;
+      if (i != j){
+        var nextSegment = substituteSegment(sortedArray[i], sortedArray[j], "♞");
+        var subbedText = substituteSegment(standardText, sortedArray[j], "♞");
+        // console.log("subSegment: "+ sortedArray[j]);
+        // console.log("nextSegment: "+ nextSegment);
+        var interferenceScore = calcByteSavings(countSegment(standardText, sortedArray[i]), sortedArray[i].length) - calcByteSavings(countSegment(subbedText, nextSegment), nextSegment.length);
+        // console.log("interferenceScore: " + interferenceScore);
+        conflictDict[sortedArray[j]][sortedArray[i]] = interferenceScore;
       }
-      var nextSegment = substituteSegment(sortedArray[i], sortedArray[j], "♞");
-      var subbedText = substituteSegment(standardText, sortedArray[j], "♞");
-      var interferenceScore = calcByteSavings(countSegment(standardText, sortedArray[i]), sortedArray[i].length) - calcByteSavings(countSegment(subbedText, nextSegment), nextSegment.length);
-      conflictDict[sortedArray[j]] = conflictDict[sortedArray[j]].concat([[sortedArray[i], interferenceScore]]);
     }
   }
   return conflictDict;
@@ -507,6 +511,20 @@ function splitText(text){
     newList.push(text.substring(lastSplit, i));
   }
   return newList.sort(function(a,b){return b.length - a.length});
+}
+
+function isCyclic(seg1, seg2, dict){
+  if (dict[seg1] != dict[seg2] || seg1.length != seg2.length){
+    return false;
+  }
+  var newSegment = seg1;
+  for (var i = 0; i < seg1.length - 1; i++){
+    newSegment = newSegment.slice(newSegment.length - 1, newSegment.length).concat(newSegment.slice(0, newSegment.length - 1))
+    if (newSegment == seg2){
+      return true;
+    }
+  }
+  return false;
 }
 
 function slashText(text, list, dictionary, initDict){
