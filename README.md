@@ -1,1 +1,5 @@
 # Compression Widget Optimizer
+### Context
+[Code.org's Lossless Compression Widget](https://studio.code.org/s/csp1-2022/lessons/9/levels/1) is an interactive made to teach students how lossless compression works. Students are given sample texts, which they compress by entering entries into a dictionary. Dictionary entries substitute text for an emoji, and you can use emojis in entries as well.
+### Use
+Using breadth-first search, this tool uses a brute-force algorithm in order to find a close-to-optimal solution. This algorithm utilizes pruning techniques in order to manage the growing size of the possibility tree. There are several parameters an user can tweak to their liking: heuristic ratio, iteration ratio, suggested segments, and deeper segment searching. Each of these modifies the algorithm in one way or another, and they can affect the speed or output of the algorithm. This algorithm is not deterministic, instead it strategically uses randomness in order to stumble upon a better solution.
