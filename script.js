@@ -30,6 +30,7 @@ function solveText(){
 
   if (uncompressedText.length < 8){
     throw "Text must be at least 8 bytes!";
+    document.querySelector("#output").innerHTML = "Text must be at least 8 bytes!";
   }
   for (var i = 0; i < includeList.length; i++){
     if (includeList[i].length < 2){
@@ -110,8 +111,7 @@ function solveText(){
     }
     totalStateNum += nextStates.length;
     console.log("Finished generating " + nextStates.length + " children nodes.");
-    document.querySelector("#output").value = "Finished generating children nodes. Direct comparison starting.";
-
+    
     nextStates.sort(function (a, b){
       return a[5].localeCompare(b[5], 'en', { sensitivity: 'base' });
     })
@@ -145,7 +145,6 @@ function solveText(){
         if (nextStates[i][6] > highestMin){
           highestMin = minCurVal[2];
           leadingState = minCurVal;
-          document.querySelector("#output").value = "New highest min: " + highestMin;
           console.log("New highest min: " + highestMin);
         }
       }
@@ -168,7 +167,6 @@ function solveText(){
     nextStates.sort(function (a,b){
       return calcStateScore(a[6], a[7], highestMin) - calcStateScore(b[6], b[7], highestMin);
     })
-    document.querySelector("#output").value = "Heuristic omission going";
     var heuristicCount = Math.floor(nextStates.length * heuristicRatio);
     var heuristicScore = Math.floor(calcStateScore(nextStates[heuristicCount][6], nextStates[heuristicCount][7], highestMin));
     for (var i = 0; i < heuristicCount; i++){
@@ -192,7 +190,6 @@ function solveText(){
     var usedSegmentListSorted = Object.keys(usedSegmentDictionary).sort(function (a,b){
       return usedSegmentDictionary[b] - usedSegmentDictionary[a];
     })
-    document.querySelector("#output").value = "Stage done. Next stage generating children...";
     console.log("Used segments out of deeper/suggested segments:\n" + usedSegmentListSorted.join("\n"));
     states = nextStates;
     nextStates = [];
