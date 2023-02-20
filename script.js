@@ -115,7 +115,7 @@ function solveText(){
     nextStates.sort(function (a, b){
       return a[5].localeCompare(b[5], 'en', { sensitivity: 'base' });
     })
-    for (i = 0; i + 1 < nextStates.length; i++){
+    for (var i = 0; i + 1 < nextStates.length; i++){
       if (nextStates[i][5] == nextStates[i+1][5]){
         if (nextStates[i][2] > nextStates[i+1][2]){
           nextStates.splice(i+1, 1);
@@ -129,7 +129,7 @@ function solveText(){
       }
     }
     for (i = 0; i < nextStates.length; i++){
-      var maxCurVal = findMaxStateScore(nextStates[i], conflictDictionary)
+      var maxCurVal = findMaxStateScore(nextStates[i], conflictDictionary, highestMin)
       nextStates[i][7] = Math.min(nextStates[i][7], maxCurVal);
       if (nextStates[i][7] < highestMin){
         nextStates.splice(i, 1);
@@ -253,9 +253,8 @@ function calcStateScore(min, max, leading){
 // If text == segment, then return is 1
 function countSegment(text, segment){
   var numOfSegments = 0;
-  var newText = standardizeText(text);
-  for (var i = 0; i <= newText.length - segment.length; i++){
-    if (newText.substring(i, i+segment.length).toLowerCase() == segment.toLowerCase()){
+  for (var i = 0; i <= text.length - segment.length; i++){
+    if (text.substring(i, i+segment.length) == segment){
       numOfSegments += 1;
       i += segment.length - 1;
     }
@@ -295,7 +294,7 @@ function recursiveUnsubText(text, dictArray){
 }
 
 function recursiveSubText(text, dictArray, isFullySub){
-  var newText = standardizeText(text)
+  var newText = ""
   for (var i = 0; i < dictArray.length; i++){
     newText = substituteSegment(newText, dictArray[i], emojis[i]);
     if (!isFullySub && newText.length == 1){
@@ -307,10 +306,9 @@ function recursiveSubText(text, dictArray, isFullySub){
 }
 
 function substituteSegment(text, segment, substitute){
-  var newText = standardizeText(text);
-  var standardSegment = standardizeText(segment);
-  for (var i = 0; i <= text.length - standardSegment.length; i++){
-    if (newText.substring(i, i+standardSegment.length).toLowerCase() == standardSegment.toLowerCase()){
+  var newText = text;
+  for (var i = 0; i <= text.length - segment.length; i++){
+    if (newText.substring(i, i+segment.length) == segment){
       newText = newText.slice(0,i) + substitute + newText.slice(i + segment.length, newText.length);
     }
   }
@@ -319,12 +317,11 @@ function substituteSegment(text, segment, substitute){
 
 function substituteSegmentList(textList, segment, substitute){
   var newList = [];
-  var standardSegment = standardizeText(segment);
   for (var i = 0; i < textList.length; i++){
-    var newText = standardizeText(textList[i]);
-    for (var j = 0; j <= newText.length - standardSegment.length; j++){
-      if (newText.substring(j, j+standardSegment.length).toLowerCase() == standardSegment.toLowerCase()){
-        newText = newText.slice(0,j) + substitute + newText.slice(j + standardSegment.length, newText.length);
+    var newText = textList[i];
+    for (var j = 0; j <= newText.length - segment.length; j++){
+      if (newText.substring(j, j+segment.length) == segment){
+        newText = newText.slice(0,j) + substitute + newText.slice(j + segment.length, newText.length);
       }
     }
     newList.push(newText);
@@ -381,7 +378,7 @@ function findMinStateScore(arr, dict){
   return [arr[0].concat(usedSegmentList)].concat(state);
 }
 
-function findMaxStateScore(arr, conflictDict){
+function findMaxStateScore(arr, conflictDict, goal){
   var sumTotal = 0;
   if (arr[3].length == 0){
     return arr[2];
@@ -403,34 +400,26 @@ function findMaxStateScore(arr, conflictDict){
       arr[1][randomNumber] = t;
     }
   }
-  var usedList = [];
   var firstIndex = 0;
   var diffTotal = 0
-  var firstSegment = recursiveUnsubText(arr[1][firstIndex], arr[0]);
-  while (usedList.length + 1 < arr[3].length){
-    while (usedList.includes(firstSegment)){
-      if (firstIndex + 1 < arr[1].length){
-        firstIndex++;
-      } else {
-        break;
-      }
-      firstSegment = recursiveUnsubText(arr[1][firstIndex], arr[0]);
-    }
-    var firstScore = arr[3][firstIndex];
+  var unusedList = [];
+  for (var i = 0; i < arr[1].length; i++){
+    unusedList.push(recursiveUnsubText(arr[1][i], arr[0]));
+  }
+  var referenceDictionary = {};
+  for (var i = 0; i < unusedList.length; i++){
+    referenceDictionary[unusedList[i]] = arr[3][i];
+  }
+  var firstIndex = 0;
+  while (unusedList.length - 1 > 0){
+    var firstSegment = unusedList[firstIndex];
+    var firstScore = referenceDictionary[firstSegment];
     var greatestDiff = 0
-    var firstDict = Object.keys(conflictDict[firstSegment])
-    var secondCandidate = Object.keys(conflictDict[firstSegment])[0];
-    for (var i = 0; i < firstDict.length; i++){
-      var secondSegment = recursiveUnsubText(firstDict[i], arr[0]);
-      var secondScore = 0;
-      if (!(usedList.includes(secondSegment)) && firstSegment != secondSegment && !(arr[0].includes(secondSegment))){
-        for (var j = 0; j < arr[1].length; j++){
-          if (arr[1][j] == secondSegment){
-            secondScore = arr[3][j]; 
-          }
-        }
-        // console.log("firstSegment: " + firstSegment);
-        // console.log("secondSegment: " + secondSegment);
+    var secondCandidate = unusedList[0];
+    for (var i = 0; i < unusedList.length; i++){
+      if (firstIndex != i){
+        var secondSegment = unusedList[i];
+        var secondScore = referenceDictionary[secondSegment];
         var firstValue = Math.min(conflictDict[firstSegment][secondSegment], secondScore);
         var secondValue = Math.min(conflictDict[secondSegment][firstSegment], firstScore);
         var curDiff = Math.min(firstValue, secondValue);
@@ -441,25 +430,31 @@ function findMaxStateScore(arr, conflictDict){
       }
     }
     diffTotal += greatestDiff;
-    if (greatestDiff != 0){
-      usedList.push(firstSegment, secondCandidate);
-      usedList.sort();
+    if (greatestDiff > 0){
+      unusedList.splice(firstIndex, 1)
+      unusedList.splice(unusedList.indexOf(secondCandidate), 1);
+      firstIndex = 0;
+      if (arr[2] + sumTotal - diffTotal < goal){
+        break;
+      }
     } else {
-      if (firstIndex + 1 < arr[1].length){
+      if (firstIndex + 1 < unusedList.length){
         firstIndex++;
       } else {
         break;
       }
+    }
+    if (firstIndex + 1 >= unusedList.length || arr[2] + sumTotal - diffTotal < goal){
+      break;
     }
   }
   return arr[2] + sumTotal - diffTotal;
 }
 
 function findAllSegmentIndices(text, segment){
-  var newText = standardizeText(text);
   var indicesOfSegments = [];
-  for (var i = 0; i <= newText.length - segment.length; i++){
-    if (newText.substring(i, i+segment.length) == segment){
+  for (var i = 0; i <= text.length - segment.length; i++){
+    if (text.substring(i, i+segment.length) == segment){
       for (var j = 0; j < segment.length; j++){
         indicesOfSegments.push(i + j);
       }
@@ -481,7 +476,6 @@ function standardizeText(text){
 }
 
 function createConflictDict(text, array){
-  var standardText = standardizeText(text);
   var sortedArray = array.sort(function (a, b) {return a.length - b.length});
   var conflictDict = {};
   for (var i = 0; i < sortedArray.length; i++){
@@ -491,8 +485,8 @@ function createConflictDict(text, array){
     for (var j = 0; j < sortedArray.length; j++){
       if (i != j){
         var nextSegment = substituteSegment(sortedArray[i], sortedArray[j], "♞");
-        var subbedText = substituteSegment(standardText, sortedArray[j], "♞");
-        var initialScore = calcByteSavings(countSegment(standardText, sortedArray[i]), sortedArray[i].length)
+        var subbedText = substituteSegment(text, sortedArray[j], "♞");
+        var initialScore = calcByteSavings(countSegment(text, sortedArray[i]), sortedArray[i].length)
         var finalScore = calcByteSavings(countSegment(subbedText, nextSegment), nextSegment.length)
         var interferenceScore = initialScore - finalScore;     
         conflictDict[sortedArray[j]][sortedArray[i]] = interferenceScore;
