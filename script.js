@@ -7,20 +7,20 @@
 //  😀 is a 2-character emoji
 
 // Add function desc and in/out
-var emojis = ["☀", "☂", "☃", "☄", "★", "☆", "☇", "☈", "☉", "☊", "☋", "☌", "☍", "☎", "☏", "☐", "☑", "☒", "☓", "☖", "☗", "☚", "☛", "☜", "☝"];
+const emojis = ["☀", "☂", "☃", "☄", "★", "☆", "☇", "☈", "☉", "☊", "☋", "☌", "☍", "☎", "☏", "☐", "☑", "☒", "☓", "☖", "☗", "☚", "☛", "☜", "☝"];
 var alpha1 = Array.from(Array(26)).map((e, i) => i + 97);
 var alpha2 = Array.from(Array(26)).map((e, i) => i + 65);
-var alphabet = alpha2.concat(alpha1).map((x) => String.fromCharCode(x)).concat(["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "!"]);
+const alphabet = alpha2.concat(alpha1).map((x) => String.fromCharCode(x)).concat(["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "!"]);
 var output = "";
 
 function solveText(){
-  var startObject = new Date;
-  var startTime = startObject.getTime();
-  var uncompressedText = standardizeText(document.querySelector("#uncompressedText").value);
-  var includeList = document.querySelector("#suggestedSegments").value.split("\n");
-  var heuristicRatio = parseFloat(document.querySelector("#heuristicRatio").value);
-  var iterateRatio = parseFloat(document.querySelector("#iterateRatio").value);
-  var doDeeperSearch = document.querySelector("#doDeeperSearch").checked;
+  const startObject = new Date;
+  const startTime = startObject.getTime();
+  const uncompressedText = standardizeText(document.querySelector("#uncompressedText").value);
+  const includeList = document.querySelector("#suggestedSegments").value.split("\n");
+  const heuristicRatio = parseFloat(document.querySelector("#heuristicRatio").value);
+  const iterateRatio = parseFloat(document.querySelector("#iterateRatio").value);
+  const doDeeperSearch = document.querySelector("#doDeeperSearch").checked;
   
   window.sessionStorage.setItem('uncompressedText', uncompressedText);
   window.sessionStorage.setItem('includeList', includeList.join("\n"));
@@ -91,7 +91,7 @@ function solveText(){
   console.log(indexDictionary);
   console.log(segmentList);
   console.log(segmentDictionary);
-  var conflictDictionary = createConflictDict(slashedText, segmentList);
+  const conflictDictionary = createConflictDict(slashedText, segmentList);
   console.log(conflictDictionary);  
   console.log(uncompressedText.length + "-byte input!");
   states.push([[], segmentList, 0, initializeSegmentSavings(uncompressedText, segmentList), slashedText, "", 0, 1000000]);
@@ -118,9 +118,9 @@ function solveText(){
     for (var i = 0; i + 1 < nextStates.length; i++){
       if (nextStates[i][5] == nextStates[i+1][5]){
         if (nextStates[i][2] > nextStates[i+1][2]){
-          nextStates.splice(i+1, 1);
+          nextStates = nextStates.slice(0, i+1).concat(nextStates.slice(i+2, nextStates.length));
         } else if (nextStates[i][2] < nextStates[i+1][2]) {
-          nextStates.splice(i, 1);
+          nextStates = nextStates.slice(0, i).concat(nextStates.slice(i+1, nextStates.length));
         } else {
           continue;
         }
@@ -132,7 +132,7 @@ function solveText(){
       var maxCurVal = findMaxStateScore(nextStates[i], conflictDictionary, highestMin)
       nextStates[i][7] = Math.min(nextStates[i][7], maxCurVal);
       if (nextStates[i][7] < highestMin){
-        nextStates.splice(i, 1);
+        nextStates = nextStates.slice(0, i).concat(nextStates.slice(i + 1, nextStates.length));
         i -= 1;
         console.log("Omitted by min/max because under " + highestMin + " max");
       }
@@ -156,7 +156,7 @@ function solveText(){
     }
     for (var i = 0; i < nextStates.length; i++){
       if (nextStates[i][7] < highestMin){
-        nextStates.splice(i, 1);
+        nextStates = nextStates.slice(0, i).concat(nextStates.slice(i + 1, nextStates.length));
         i -= 1;
         console.log("Omitted by min/max because under " + highestMin + " max");
       }
@@ -170,7 +170,7 @@ function solveText(){
     var heuristicCount = Math.floor(nextStates.length * heuristicRatio);
     var heuristicScore = Math.floor(calcStateScore(nextStates[heuristicCount][6], nextStates[heuristicCount][7], highestMin));
     for (var i = 0; i < heuristicCount; i++){
-      nextStates.splice(0, 1);
+      nextStates = nextStates.slice(1, nextStates.length);
       console.log("Omitted by heuristic b/c under " + heuristicScore + " score");
     }
     for (var i = 0; i < nextStates.length; i++){
@@ -428,8 +428,8 @@ function findMaxStateScore(arr, conflictDict, goal){
     }
     diffTotal += greatestDiff;
     if (greatestDiff > 0){
-      unusedList.splice(firstIndex, 1)
-      unusedList.splice(unusedList.indexOf(secondCandidate), 1);
+      unusedList = unusedList.slice(0, firstIndex).concat(unusedList.slice(firstIndex + 1, unusedList.length));
+      unusedList = unusedList.slice(0, unusedList.indexOf(secondCandidate)).concat(unusedList.slice(unusedList.indexOf(secondCandidate) + 1, unusedList.length))
       firstIndex = 0;
       if (arr[2] + sumTotal - diffTotal < goal){
         break;
