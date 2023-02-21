@@ -92,6 +92,13 @@ function solveText(){
   console.log(segmentList);
   console.log(segmentDictionary);
   var conflictDictionary = createConflictDict(slashedText, segmentList);
+  var maxDictionary = {};
+  for (var i = 0; i < Object.keys(conflictDictionary).length; i++){
+    maxDictionary[Object.keys(conflictDictionary)[i]] = Object.keys(conflictDictionary[Object.keys(conflictDictionary)[i]]).sort(function (a,b){
+      return conflictDictionary[Object.keys(conflictDictionary)[i]][b] - conflictDictionary[Object.keys(conflictDictionary)[i]][a]
+    })
+  }
+  console.log(maxDictionary);
   console.log(conflictDictionary);  
   console.log(uncompressedText.length + "-byte input!");
   states.push([[], segmentList, 0, initializeSegmentSavings(uncompressedText, segmentList), slashedText, "", 0, 1000000]);
@@ -209,6 +216,9 @@ function solveText(){
   output = "Dictionary:<br>" + leadingState[0].join("<br>") + "<br><br>Bytes saved: " + leadingState[2] + "<br>Took " + Math.floor((endTime - startTime)*10)/10000 + " seconds.";
   document.querySelector("#output").innerHTML = output;
   window.sessionStorage.setItem('output', output);
+  while (true){
+    continue;
+  }
   return output;
 }
 
