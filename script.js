@@ -219,7 +219,9 @@ function checkExistingResult(){
     document.querySelector("#suggestedSegments").value = window.sessionStorage.getItem('includeList');
     document.querySelector("#heuristicRatio").value = window.sessionStorage.getItem('heuristicRatio');
     document.querySelector("#iterateRatio").value = window.sessionStorage.getItem('iterateRatio');
-    document.querySelector("#doDeeperSearch").checked = window.sessionStorage.getItem('doDeeperSearch');
+    if (window.sessionStorage.getItem('doDeeperSearch') == 'true'){
+    document.querySelector("#doDeeperSearch").checked = 'true';
+    }
   }
 }
 
