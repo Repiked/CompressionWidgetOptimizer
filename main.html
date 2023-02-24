@@ -1,4 +1,11 @@
+<!--
+Suggestions:
+ - two columns, instructions on one side, and input on left side
+ - 
+-->
+
 <!DOCTYPE html>
+<meta charset="utf-8">
 <html>
 	<head>
 		<script src="script.js"></script>
@@ -12,7 +19,12 @@
 	</head>
 	<body style="background-color:floralwhite;" onload="checkExistingResult();"> 
 		<h1 class="center">Code.org Compression Widget Solver</h1> 
-		<p class="center">This tool uses breadth-first search and various pruning techniques to compress text.</p>
+		<p style="color:#293323;">
+			<h3> Overview </h3>
+			This tool uses breadth-first search and various pruning techniques to compress text. 
+			Enter in text that you want to compress in the box below. You can choose from the code.org pre-set options or enter your own.
+			Skip the second box for now, only use it if you know what you're doing. 
+		</p>
 		<form>
 		  <p><label for="uncompressedText">Input text to be compressed here or choose from the dropdown. </label></p>
 		  <label for="premadeTextDropdown">Built-in code.org text:</label>
@@ -28,7 +40,7 @@
 			  <option value="Aaaaaaaa">Aaaaaaaaaaaa</option>
 		  </select> <br>
 		  <textarea id="uncompressedText" name="uncompressedText" rows="5" cols="80">So_wake_me_up_when_it's_all_over_When_I'm_wiser_and_I'm_older_All_this_time_I_was_finding_myself_And_I_didn't_know_I_was_lost__Didn't_know_I_was_lost_I_didn't_know_I_was_lost_I_didn't_know_I_was_lost_I_didn't_know_(didn't_know,_didn't_know)</textarea><br>
-		  <p><label for="suggestedSegments">Enter any suggested segments below: </label></p>
+		  <p><label for="suggestedSegments">Enter any suggested segments below (for advanced users only):</label></p>
 		  <textarea id="suggestedSegments" name="suggestedSegments" rows="4" cols="80" placeholder= "Enter suggested segments here (new line for each)"></textarea><br><br>
 		  Heuristic ratio: <input type="number" name="heuristicRatio" id="heuristicRatio" size="5" value="0.95" min="0" max="1" step="0.01"> <br>
 		  Iteration ratio: <input type="number" name="iterateRatio" id="iterateRatio" size="5" value="0.3" min="0" max="0.99" step="0.01"> <br><br>
@@ -37,5 +49,11 @@
 		  <input type="submit" value="Solve!" onclick="solveText()">
 		</form>
 		<p id = "output"></p>
+		<p>
+			<h3> More info </h3>
+			The heuristic ratio determines the aggressiveness of the pruning of the algorithm. The higher the heuristic, the faster the algorithm but the more likely it cuts out good dictionaries. 
+			<br> The iteration ratio determines how long the algorithm is willing to try to find the best solution. 0.3 is default, 0.7 is thorough, and 0.9 is more than enough. 
+			<br> The 'deeper segment searching' option adds additional segments to the list of segments, that may or may not help the compression. Use this if you're willing to wait for potentially better results.
+		</p>
 	</body>
 </html>
