@@ -98,7 +98,7 @@ function solveText(){
   var interferenceDictionary = createInterferenceDict(slashedText, segmentList);
   var maxDictionary = {};
   for (var i = 0; i < Object.keys(conflictDictionary).length; i++){
-    maxDictionary[Object.keys(conflictDictionary)[i]] = Object.keys(conflictDictionary[Object.keys(conflictDictionary)[i]]).sort(function (a,b){
+    maxDictionary[Object.keys(conflictDictionary)[i]] = Object.keys(conflictDictionary[Object.keys(conflictDictionary)[i]]).sort(function sortMaxDict (a,b){
       return conflictDictionary[Object.keys(conflictDictionary)[i]][b] - conflictDictionary[Object.keys(conflictDictionary)[i]][a]
     })
   }
@@ -124,7 +124,7 @@ function solveText(){
     }
     totalStateNum += nextStates.length;
     console.log("Finished generating " + nextStates.length + " children nodes.");
-    nextStates.sort(function (a, b){
+    nextStates.sort(function sortDirect(a, b){
       return a[5].localeCompare(b[5], 'en', { sensitivity: 'base' });
     })
     for (var i = 0; i + 1 < nextStates.length; i++){
@@ -449,7 +449,7 @@ function findMaxStateScore(arr, conflictDict, goal){
   }
   var referenceDictionary = {};
   for (var i = 0; i < unusedList.length; i++){
-    referenceDictionary[unusedList[i]] = arr[3][i];
+    referenceDictionary[unusedList[i]] = calcSetSavings(arr, i);
   }
   var firstIndex = 0;
   while (unusedList.length - 1 > 0){
