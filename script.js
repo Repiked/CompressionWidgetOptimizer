@@ -22,6 +22,7 @@ function solveText(){
   var includeList = document.querySelector("#suggestedSegments").value.split("\n");
   var heuristicRatio = parseFloat(document.querySelector("#heuristicRatio").value);
   var iterateRatio = parseFloat(document.querySelector("#iterateRatio").value);
+  var minNodes = parseFloat(document.querySelector("#minNodes").value);
   var doDeeperSearch = document.querySelector("#doDeeperSearch").checked;
   
   window.sessionStorage.setItem('uncompressedText', uncompressedText);
@@ -29,6 +30,7 @@ function solveText(){
   window.sessionStorage.setItem('includeList', includeList.join("\n"));
   window.sessionStorage.setItem('heuristicRatio', heuristicRatio);
   window.sessionStorage.setItem('iterateRatio', iterateRatio);
+  window.sessionStorage.setItem('minNodes', minNodes);
   window.sessionStorage.setItem('doDeeperSearch', doDeeperSearch);
 
   if (uncompressedText.length < 8){
@@ -117,8 +119,6 @@ function solveText(){
   console.log(uncompressedText.length + "-byte input!");
   states.push([[], segmentList, 0, initializeInterferenceSets(slashedText, segmentList), slashedText, "", 0, 1000000]);
   console.log(states);
-  var minNodes = Math.floor(500/segmentList.length)
-  console.log("Min nodes: " + minNodes);
   while (states.length > 0){
     for (var i = 0; i < states.length; i++){
       for (var j = 0; j < states[i][1].length; j++){
@@ -244,8 +244,9 @@ function checkExistingResult(){
     document.querySelector("#suggestedSegments").value = window.sessionStorage.getItem('includeList');
     document.querySelector("#heuristicRatio").value = window.sessionStorage.getItem('heuristicRatio');
     document.querySelector("#iterateRatio").value = window.sessionStorage.getItem('iterateRatio');
+    document.querySelector("#minNodes").value = window.sessionStorage.getItem('minNodes');
     if (window.sessionStorage.getItem('doDeeperSearch') == 'true'){
-    document.querySelector("#doDeeperSearch").checked = 'true';
+      document.querySelector("#doDeeperSearch").checked = 'true';
     }
   }
 }
