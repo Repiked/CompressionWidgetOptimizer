@@ -117,7 +117,7 @@ function solveText(){
   console.log(uncompressedText.length + "-byte input!");
   states.push([[], segmentList, 0, initializeInterferenceSets(slashedText, segmentList), slashedText, "", 0, 1000000]);
   console.log(states);
-  var minNodes = Math.floor(1000/segmentList.length)
+  var minNodes = Math.floor(500/segmentList.length)
   console.log("Min nodes: " + minNodes);
   while (states.length > 0){
     for (var i = 0; i < states.length; i++){
@@ -304,11 +304,12 @@ function createSegmentSavings(array, segment, conflictDict){
 function createSetInstances(array, segment, interfereDict, doSub){
   var newList = [...array[3].map(set => [...set])];
   var newList = newList.map(arr => new Set(arr));
-  var newSegList = [...array[1]];
-  var subbedSegment = segment;
   if (doSub){
-    var newSegList = newSegList.map(a => recursiveUnsubText(a, array[0]));
+    var newSegList = [...array[1]].map(a => recursiveUnsubText(a, array[0]));
     var subbedSegment = recursiveUnsubText(segment, array[0]);
+  } else {
+    var newSegList = [...array[1]];
+    var subbedSegment = segment;
   }
   for (var i = 0; i < array[1].length; i++){
     if (array[1][i] != segment){
@@ -336,20 +337,19 @@ function initializeSegmentSavings(text, segList){
   return newList;
 }
 
-function recursiveUnsubText(text, dictArray){
-  var subbedSegment = [];
+function recursiveUnsubText(text, dictArray) {
+  var subbedText = "";
   for (let i = 0; i < text.length; i++) {
     var char = text[i];
     if (emojisSet.has(char)) {
       var index = emojis.indexOf(char);
       var value = dictArray[index];
-      var subbedValue = recursiveUnsubText(value, dictArray);
-      subbedSegment.push(subbedValue);
+      subbedText += recursiveUnsubText(value, dictArray);
     } else {
-      subbedSegment.push(char);
+      subbedText += char;
     }
   }
-  return subbedSegment.join("")
+  return subbedText;
 }
 
 function recursiveSubText(text, dictArray, isFullySub){
@@ -527,10 +527,10 @@ function findIndicesInterference(targetList, conflictList, targetSeg, conflictSe
   var interfereSet = new Set();
   for (var i = 0; i < conflictList.length; i++){
     for (var j = 0; j < targetList.length; j++){
-      let indexi = conflictList[i];
-      let indexj = targetList[j];
-      let endi = conflictList[i] + conflictSeg.length;
-      let endj = targetList[j] + targetSeg.length;
+      var indexi = conflictList[i];
+      var indexj = targetList[j];
+      var endi = conflictList[i] + conflictSeg.length;
+      var endj = targetList[j] + targetSeg.length;
       if (indexj <= indexi && endj >= endi) {} 
       else if (indexi <= indexj && endi > indexj) {
         interfereSet.add(j);
