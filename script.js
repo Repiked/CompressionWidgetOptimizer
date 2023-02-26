@@ -2,12 +2,7 @@
 //  https://javascript.plainenglish.io/create-an-array-of-alphabet-characters-in-javascript-with-this-simple-trick-930033079dd3
 //  for the alphabet generator
 
-// Funny bugs:
-//  [2, 3] is NOT equal to [2, 3]
-//  😀 is a 2-character emoji
-
-// Add function desc and in/out
-var emojis = ["☀", "☂", "☃", "☄", "★", "☆", "☇", "☈", "☉", "☊", "☋", "☌", "☍", "☎", "☏", "☐", "☑", "☒", "☓", "☖", "☗", "☚", "☛", "☜", "☝"];
+var emojis = ["☀", "☂", "☃", "☄", "★", "☆", "☇", "☈", "☉", "☊", "☋", "☌", "☍", "☎", "☏"];
 var emojisSet = new Set(emojis);
 var alpha1 = Array.from(Array(26)).map((e, i) => i + 97);
 var alpha2 = Array.from(Array(26)).map((e, i) => i + 65);
@@ -230,7 +225,8 @@ function solveText(){
   console.log("This compression iterated through " + totalStateNum + " states.");
   console.log("Took " + Math.floor((endTime - startTime)*10)/10000 + " seconds.");
 
-  output = "Dictionary:<br>" + leadingState[0].join("<br>") + "<br><br>Bytes saved: " + leadingState[2] + "<br>Took " + Math.floor((endTime - startTime)*10)/10000 + " seconds.";
+  var compressionRatio = Math.round(leadingState[2]/uncompressedText.length * 10000)/100
+  output = "Dictionary:<br>" + leadingState[0].join("<br>") + "<br><br>Total: " + (uncompressedText.length - leadingState[2]) + "<br>Original text size: " + uncompressedText.length + "<br>Compression ratio: " + compressionRatio + "%<br><br>Bytes saved: " + leadingState[2] + "<br>Took " + Math.floor((endTime - startTime)*10)/10000 + " seconds.";
   document.querySelector("#output").innerHTML = output;
   window.sessionStorage.setItem('output', output);
   return output;
@@ -291,7 +287,7 @@ function countSegment(text, segment){
   return numOfSegments;
 }
 
-function createSegmentSavings(array, segment, conflictDict){
+function createSegmentSavings(array, segment){
   var newList = array[3];
   var subbedSegment = recursiveUnsubText(segment, array[0]);
   for (var i = 0; i < array[1].length; i++){
@@ -602,9 +598,10 @@ function createInterferenceDict(text, array){
   for (var i = 0; i < sortedArray.length; i++){
     for (var j = 0; j < sortedArray.length; j++){
       if (i != j){
-        var targetSegmentIndices = findAllSegmentIndices(text, sortedArray[i], true);
-        var conflictSegmentIndices = findAllSegmentIndices(text, sortedArray[j], true);
-        interferenceDict[sortedArray[j]][sortedArray[i]] = findIndicesInterference(targetSegmentIndices, conflictSegmentIndices, sortedArray[i], sortedArray[j]);
+        var targetIndices = findAllSegmentIndices(text, sortedArray[i], true);
+        var conflictIndices = findAllSegmentIndices(text, sortedArray[j], true);
+        var interfereIndices = findIndicesInterference(targetIndices, conflictIndices, sortedArray[i], sortedArray[j]);
+        interferenceDict[sortedArray[j]][sortedArray[i]] = interfereIndices
       }
     }
   }
