@@ -8,6 +8,7 @@
 
 // Add function desc and in/out
 var emojis = ["☀", "☂", "☃", "☄", "★", "☆", "☇", "☈", "☉", "☊", "☋", "☌", "☍", "☎", "☏", "☐", "☑", "☒", "☓", "☖", "☗", "☚", "☛", "☜", "☝"];
+var emojisSet = new Set(emojis);
 var alpha1 = Array.from(Array(26)).map((e, i) => i + 97);
 var alpha2 = Array.from(Array(26)).map((e, i) => i + 65);
 var alphabet = alpha2.concat(alpha1).map((x) => String.fromCharCode(x)).concat(["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "!"]);
@@ -336,15 +337,19 @@ function initializeSegmentSavings(text, segList){
 }
 
 function recursiveUnsubText(text, dictArray){
-  var subbedText = "";
-  for (var i = 0; i < text.length; i++){
-    if (emojis.includes(text.substring(i, i+1))){
-      subbedText = subbedText.concat(recursiveUnsubText(dictArray[emojis.indexOf(text.substring(i, i+1))], dictArray))
+  var subbedSegment = [];
+  for (let i = 0; i < text.length; i++) {
+    var char = text[i];
+    if (emojisSet.has(char)) {
+      var index = emojis.indexOf(char);
+      var value = dictArray[index];
+      var subbedValue = recursiveUnsubText(value, dictArray);
+      subbedSegment.push(subbedValue);
     } else {
-      subbedText = subbedText.concat(text.substring(i, i+1));
+      subbedSegment.push(char);
     }
   }
-  return subbedText;
+  return subbedSegment.join("")
 }
 
 function recursiveSubText(text, dictArray, isFullySub){
