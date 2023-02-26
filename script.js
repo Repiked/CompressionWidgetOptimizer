@@ -301,31 +301,34 @@ function createSegmentSavings(array, segment, conflictDict){
   return newList;
 }
 
-function createSetInstances(array, segment, interfereDict, doSub){
-  var newList = [...array[3].map(set => [...set])];
-  var newList = newList.map(arr => new Set(arr));
-  if (doSub){
-    var newSegList = [...array[1]].map(a => recursiveUnsubText(a, array[0]));
-    var subbedSegment = recursiveUnsubText(segment, array[0]);
+function createSetInstances(array, segment, interfereDict, doSub) {
+  var newList = array[3].map(set => new Set(set));
+  var newSegList, subbedSegment;
+
+  if (doSub) {
+    newSegList = array[1].map(a => recursiveUnsubText(a, array[0]));
+    subbedSegment = recursiveUnsubText(segment, array[0]);
   } else {
-    var newSegList = [...array[1]];
-    var subbedSegment = segment;
+    newSegList = [...array[1]];
+    subbedSegment = segment;
   }
-  for (var i = 0; i < array[1].length; i++){
-    if (array[1][i] != segment){
-      interfereDict[subbedSegment][newSegList[i]].forEach(function (a){
-        newList[i].delete(a);
-      })
+
+  for (var i = 0; i < array[1].length; i++) {
+    if (array[1][i] !== segment) {
+      var interfereSet = interfereDict[subbedSegment][newSegList[i]];
+      for (var element of interfereSet) {
+        newList[i].delete(element);
+      }
     } else {
       newList[i] = null;
     }
   }
-  for (var i = 0; i < newList.length; i++){
-    if (newList[i] == null){
-      newList.splice(i, 1);
-      break;
-    }
+
+  var nullIndex = newList.findIndex(set => set === null);
+  if (nullIndex !== -1) {
+    newList.splice(nullIndex, 1);
   }
+
   return newList;
 }
 
