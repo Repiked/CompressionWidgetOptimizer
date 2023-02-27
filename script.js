@@ -2,7 +2,7 @@
 //  https://javascript.plainenglish.io/create-an-array-of-alphabet-characters-in-javascript-with-this-simple-trick-930033079dd3
 //  for the alphabet generator
 
-var emojis = ["☀", "☂", "☃", "☄", "★", "☆", "☇", "☈", "☉", "☊", "☋", "☌", "☍", "☎", "☏"];
+var emojis = ["☀", "☂", "☃", "☄", "★", "☆", "☇", "☈", "☉", "☊", "☋", "☌", "☍", "☎", "☏", "☐", "☑", "☒", "☓", "☖", "☗", "☚", "☛", "☜", "☝", "☞", "☟", "☠", "☡", "☢", "☣", "☤","☥","☮","☯","☰","☱","☲","☳","☴","☵","☶","☷","☸","☹","☺","☻","☼","☽","☾","☿","♀","♁","♂","♃","♄","♅"];
 var emojisSet = new Set(emojis);
 var alpha1 = Array.from(Array(26)).map((e, i) => i + 97);
 var alpha2 = Array.from(Array(26)).map((e, i) => i + 65);
@@ -91,6 +91,7 @@ function solveText(){
     return b.length - a.length;
   })
   console.log(indexDictionary);
+  console.log(slashedText);
   console.log(segmentList);
   console.log(segmentDictionary);
   var conflictDictionary = createConflictDict(slashedText, segmentList);
@@ -108,6 +109,7 @@ function solveText(){
       return Math.min(firstBScore, secondBScore) - Math.min(firstAScore, secondAScore);
     })
   }
+  console.log(uncompressedText);                                                                                                        
   console.log(maxDictionary);
   console.log(conflictDictionary); 
   console.log(interferenceDictionary); 
@@ -287,46 +289,49 @@ function countSegment(text, segment){
   return numOfSegments;
 }
 
-function createSegmentSavings(array, segment){
-  var newList = array[3];
-  var subbedSegment = recursiveUnsubText(segment, array[0]);
-  for (var i = 0; i < array[1].length; i++){
-    if (array[1][i] != segment){
+function createSetInstances(array, segment, interfereDict, doSub) {
+  try {
+    var newList = array[3].map(set => new Set(set));
+    var newSegList, subbedSegment;
+
+    if (doSub) {
+      newSegList = array[1].map(a => recursiveUnsubText(a, array[0]));
+      subbedSegment = recursiveUnsubText(segment, array[0]);
+    } else {
+      newSegList = [...array[1]];
+      subbedSegment = segment;
+    }
+
+    for (var i = 0; i < array[1].length; i++) {
+      if (array[1][i] !== segment) {
+        var interfereSet = interfereDict[subbedSegment][newSegList[i]];
+        for (var element of interfereSet) {
+          newList[i].delete(element);
+        }
+      } else {
+        newList[i] = null;
+      }
+    }
+
+    var nullIndex = newList.findIndex(set => set === null);
+    if (nullIndex !== -1) {
+      newList.splice(nullIndex, 1);
+    }
+
+    return newList;
+  } catch (error) {
+    console.log(error);
+    console.log(array);
+    console.log("Segment: " + segment);
+    console.log("subbed segment: " + subbedSegment)
+    console.log("doSub: " + doSub);
+    console.log(newSegList);
+    console.log(newList);
+    console.log(interfereDict);
+    while (true){
       continue;
     }
   }
-  return newList;
-}
-
-function createSetInstances(array, segment, interfereDict, doSub) {
-  var newList = array[3].map(set => new Set(set));
-  var newSegList, subbedSegment;
-
-  if (doSub) {
-    newSegList = array[1].map(a => recursiveUnsubText(a, array[0]));
-    subbedSegment = recursiveUnsubText(segment, array[0]);
-  } else {
-    newSegList = [...array[1]];
-    subbedSegment = segment;
-  }
-
-  for (var i = 0; i < array[1].length; i++) {
-    if (array[1][i] !== segment) {
-      var interfereSet = interfereDict[subbedSegment][newSegList[i]];
-      for (var element of interfereSet) {
-        newList[i].delete(element);
-      }
-    } else {
-      newList[i] = null;
-    }
-  }
-
-  var nullIndex = newList.findIndex(set => set === null);
-  if (nullIndex !== -1) {
-    newList.splice(nullIndex, 1);
-  }
-
-  return newList;
 }
 
 function initializeSegmentSavings(text, segList){
@@ -340,7 +345,7 @@ function initializeSegmentSavings(text, segList){
 function recursiveUnsubText(text, dictArray) {
   var subbedText = "";
   for (let i = 0; i < text.length; i++) {
-    var char = text[i];
+    var char = text.substring(i, i+1);
     if (emojisSet.has(char)) {
       var index = emojis.indexOf(char);
       var value = dictArray[index];
@@ -606,22 +611,6 @@ function createInterferenceDict(text, array){
     }
   }
   return interferenceDict;
-}
-
-function splitText(text){
-  var lastSplit = 0;
-  var newList = [];
-  for (var i = 1; i < text.length; i++){
-    if ((text.substring(i,i+1) == "/" && text.substring(i-1,i) != "/")){
-      newList.push(text.substring(lastSplit, i));
-    } else if (text.substring(i, i+1) != "/" && text.substring(i-1,i) == "/"){
-      lastSplit = i;
-    }
-  }
-  if (text.substring(text.length - 1, text.length) != "/"){
-    newList.push(text.substring(lastSplit, i));
-  }
-  return newList.sort(function(a,b){return b.length - a.length});
 }
 
 function isCyclic(seg1, seg2, dict){
