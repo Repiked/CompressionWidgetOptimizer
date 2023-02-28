@@ -422,7 +422,6 @@ function findMinStateScore(arr, interferenceDict, randVal){
   var state = arr.slice(1, 5);
   var selectedIndex = 0;
   var counter = arr[0].length
-  var isBreak = false;
   var usedSegmentList = [];
   // Fisher-Yates shuffle
   for (var i = 0; i < state[2].length; i++){
@@ -448,7 +447,7 @@ function findMinStateScore(arr, interferenceDict, randVal){
       }
       if (calcSetSavings([arr[0]].concat(state), selectedIndex) <= 0){
         isBreak = true;
-        break;
+        return [arr[0].concat(usedSegmentList)].concat(state);
       }
       usedSegmentList.push(state[0][selectedIndex]);
       var newPossibleSegments = substituteSegmentList(state[0].slice(0,selectedIndex).concat(state[0].slice(selectedIndex+1, state[0].length)), state[0][selectedIndex], emojis[counter]);
@@ -457,10 +456,7 @@ function findMinStateScore(arr, interferenceDict, randVal){
       state = [newPossibleSegments, state[1] + calcSetSavings([arr[0].concat(usedSegmentList)].concat(state), selectedIndex), newSavings, subbedText];
       counter++;
     } else {
-      break;
-    }
-    if (isBreak){
-      break;
+      return [arr[0].concat(usedSegmentList)].concat(state);
     }
   }
   return [arr[0].concat(usedSegmentList)].concat(state);
