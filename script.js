@@ -7,6 +7,7 @@ var emojisSet = new Set(emojis);
 var alpha1 = Array.from(Array(26)).map((e, i) => i + 97);
 var alpha2 = Array.from(Array(26)).map((e, i) => i + 65);
 var alphabet = alpha2.concat(alpha1).map((x) => String.fromCharCode(x)).concat(["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "!"]);
+var cache = {};
 var output = "";
 
 function solveText(){
@@ -18,6 +19,7 @@ function solveText(){
   var heuristicRatio = parseFloat(document.querySelector("#heuristicRatio").value);
   var iterateRatio = parseFloat(document.querySelector("#iterateRatio").value);
   var minNodes = parseFloat(document.querySelector("#minNodes").value);
+  var enableAutoSegmentGeneration = document.querySelector("#enableAutoSegmentGeneration").checked;
   var doDeeperSearch = document.querySelector("#doDeeperSearch").checked;
   
   window.sessionStorage.setItem('uncompressedText', uncompressedText);
@@ -26,6 +28,7 @@ function solveText(){
   window.sessionStorage.setItem('heuristicRatio', heuristicRatio);
   window.sessionStorage.setItem('iterateRatio', iterateRatio);
   window.sessionStorage.setItem('minNodes', minNodes);
+  window.sessionStorage.setItem('enableAutoSegmentGeneration', enableAutoSegmentGeneration);
   window.sessionStorage.setItem('doDeeperSearch', doDeeperSearch);
 
   if (uncompressedText.length < 8){
@@ -53,6 +56,7 @@ function solveText(){
   var initialDictionary = {};
   var segmentDictionary = {};
   var usedSegmentDictionary = {};
+  var generalSegmentDictionary = {};
   var slashedText = slashText(uncompressedText, segmentList, segmentDictionary, initialDictionary);
   var initList = [];
   if (doDeeperSearch){
@@ -69,6 +73,7 @@ function solveText(){
       }
     }
   }
+  var segmentList = enableAutoSegmentGeneration ? segmentList : [];
   for (var i = 0; i < includeList.length; i++){
     if (!(segmentList.includes(includeList[i]))){
       segmentList.push(includeList[i]);
@@ -158,9 +163,10 @@ function solveText(){
       }
     }
     var currentIterationLength = nextStates.length; 
+    var currentRand = 1;
     while (currentIterationLength > 0){
       for (i = 0; i < currentIterationLength; i++){
-        var minCurVal = findMinStateScore(nextStates[i], interferenceDictionary);
+        var minCurVal = findMinStateScore(nextStates[i], interferenceDictionary, currentRand);
         nextStates[i][6] = Math.max(nextStates[i][6], minCurVal[2]);
         if (nextStates[i][6] > highestMin){
           highestMin = minCurVal[2];
@@ -169,7 +175,8 @@ function solveText(){
         }
       }
       console.log("Min iteration loop");
-      currentIterationLength = Math.floor(iterateRatio*currentIterationLength);
+      currentIterationLength = Math.floor(iterateRatio * currentIterationLength);
+      currentRand *= (2 + iterateRatio)/3;
       nextStates.sort(function (a,b){
         return calcStateScore(b[6], b[7], highestMin) - calcStateScore(a[6], a[7], highestMin);
       })
@@ -197,6 +204,11 @@ function solveText(){
     for (var i = 0; i < nextStates.length; i++){
       for (var j = 0; j < nextStates[i][0].length; j++){
         var tempSegment = recursiveUnsubText(nextStates[i][0][j], nextStates[i][0]);
+        if (tempSegment in generalSegmentDictionary){
+          generalSegmentDictionary[tempSegment] = Math.floor(100*(generalSegmentDictionary[tempSegment] + calcStateScore(nextStates[i][6], nextStates[i][7], highestMin)/highestMin))/100;
+        } else {
+          generalSegmentDictionary[tempSegment] = Math.floor(100*calcStateScore(nextStates[i][6], nextStates[i][7], highestMin)/highestMin)/100;
+        }
         if (!(initList.includes(tempSegment))){
           continue;
         }
@@ -207,11 +219,17 @@ function solveText(){
         }
       }
     }
-    console.log(usedSegmentDictionary);
-    var usedSegmentListSorted = Object.keys(usedSegmentDictionary).sort(function (a,b){
+    var usedSegmentsSorted = Object.keys(usedSegmentDictionary).sort(function (a,b){
       return usedSegmentDictionary[b] - usedSegmentDictionary[a];
     })
-    console.log("Used segments out of deeper/suggested segments:\n" + usedSegmentListSorted.join("\n"));
+    var generalSegmentsSorted = Object.keys(generalSegmentDictionary).sort(function (a,b){
+      return generalSegmentDictionary[b] - generalSegmentDictionary[a];
+    })
+    console.log(generalSegmentDictionary);
+    console.log("All segments:\n" + generalSegmentsSorted.join("\n"));
+    console.log(usedSegmentDictionary); 
+    console.log("Used segments out of deeper/suggested segments:\n" + usedSegmentsSorted.join("\n"));
+
     states = nextStates;
     nextStates = [];
     console.log("Stage complete!");
@@ -231,6 +249,9 @@ function solveText(){
   output = "Dictionary:<br>" + leadingState[0].join("<br>") + "<br><br>Total: " + (uncompressedText.length - leadingState[2]) + "<br>Original text size: " + uncompressedText.length + "<br>Compression ratio: " + compressionRatio + "%<br><br>Bytes saved: " + leadingState[2] + "<br>Took " + Math.floor((endTime - startTime)*10)/10000 + " seconds.";
   document.querySelector("#output").innerHTML = output;
   window.sessionStorage.setItem('output', output);
+  // while (true){
+  //   continue;
+  // }
   return output;
 }
 
@@ -243,6 +264,9 @@ function checkExistingResult(){
     document.querySelector("#heuristicRatio").value = window.sessionStorage.getItem('heuristicRatio');
     document.querySelector("#iterateRatio").value = window.sessionStorage.getItem('iterateRatio');
     document.querySelector("#minNodes").value = window.sessionStorage.getItem('minNodes');
+    if (window.sessionStorage.getItem('enableAutoSegmentGeneration') == 'true'){
+      document.querySelector("#enableAutoSegmentGeneration").checked = 'true';
+    }
     if (window.sessionStorage.getItem('doDeeperSearch') == 'true'){
       document.querySelector("#doDeeperSearch").checked = 'true';
     }
@@ -394,7 +418,7 @@ function substituteSegmentList(textList, segment, substitute){
 }
 
 // remake this, state slice isn't necessary
-function findMinStateScore(arr, interferenceDict){
+function findMinStateScore(arr, interferenceDict, randVal){
   var state = arr.slice(1, 5);
   var selectedIndex = 0;
   var counter = arr[0].length
@@ -417,7 +441,7 @@ function findMinStateScore(arr, interferenceDict){
       var maxVal = calcSetSavings([arr[0]].concat(state), 0);
       var selectedIndex = 0;
       for (var j = 0; j < state[2].length; j++){
-        if (calcSetSavings([arr[0]].concat(state), j) > maxVal && Math.random() < 0.8){
+        if (calcSetSavings([arr[0]].concat(state), j) > maxVal && Math.random() < randVal){
           maxVal = calcSetSavings([arr[0]].concat(state), j);
           selectedIndex = j;
         }
