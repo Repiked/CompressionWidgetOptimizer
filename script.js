@@ -233,7 +233,8 @@ function solveText(){
     states = nextStates;
     nextStates = [];
     console.log("Stage complete!");
-    console.log("Leading score: " + highestMin);
+    console.log("Leading byte savings: " + highestMin);
+    console.log("Leading percentage: " + Math.round(highestMin/uncompressedText.length * 10000)/100 + "%")
     console.log("Leading state:\n" + leadingState[0].join("\n"));
     console.log("Length: " + states.length);
   }
@@ -358,14 +359,6 @@ function createSetInstances(array, segment, interfereDict, doSub) {
   }
 }
 
-function initializeSegmentSavings(text, segList){
-  var newList = [];
-  for (var i = 0; i < segList.length; i++){
-    newList.push(calcByteSavings(countSegment(text, segList[i]), segList[i].length));
-  }
-  return newList;
-}
-
 function recursiveUnsubText(text, dictArray) {
   var subbedText = "";
   for (let i = 0; i < text.length; i++) {
@@ -379,18 +372,6 @@ function recursiveUnsubText(text, dictArray) {
     }
   }
   return subbedText;
-}
-
-function recursiveSubText(text, dictArray, isFullySub){
-  var newText = ""
-  for (var i = 0; i < dictArray.length; i++){
-    newText = substituteSegment(newText, dictArray[i], emojis[i]);
-    if (!isFullySub && newText.length == 1){
-      newText = dictArray[i];
-      break;
-    }
-  }
-  return newText;
 }
 
 function substituteSegment(text, segment, substitute){
